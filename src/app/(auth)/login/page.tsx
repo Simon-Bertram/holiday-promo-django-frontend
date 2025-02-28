@@ -28,6 +28,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { login, requestMagicCode } from "@/lib/api/auth";
 import { useAuthStore } from "@/lib/auth/store";
+import { useAsyncOperation, useFormError } from "@/lib/error";
 
 // Form validation schema for password login
 const passwordLoginSchema = z.object({
@@ -42,12 +43,32 @@ const magicCodeSchema = z.object({
 
 export default function LoginPage() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
   const [authMethod, setAuthMethod] = useState<"password" | "magic">(
     "password"
   );
   const [magicCodeRequested, setMagicCodeRequested] = useState(false);
   const { setUser, setIsAuthenticated } = useAuthStore();
+  const { handleError } = useFormError();
+
+  // Use our custom hook for login operation
+  const { execute: executeLogin, isLoading: isLoginLoading } =
+    useAsyncOperation(login, {
+      onSuccess: (user) => {
+        setUser(user);
+        setIsAuthenticated(true);
+        toast.success("Login successful");
+        router.push("/dashboard");
+      },
+    });
+
+  // Use our custom hook for magic code request
+  const { execute: executeMagicCode, isLoading: isMagicCodeLoading } =
+    useAsyncOperation(requestMagicCode, {
+      onSuccess: () => {
+        setMagicCodeRequested(true);
+        toast.success("Magic code sent to your email");
+      },
+    });
 
   // Password login form
   const passwordForm = useForm<z.infer<typeof passwordLoginSchema>>({
@@ -70,33 +91,26 @@ export default function LoginPage() {
   const onPasswordSubmit = async (
     values: z.infer<typeof passwordLoginSchema>
   ) => {
-    setIsLoading(true);
     try {
-      const user = await login(values);
-      setUser(user);
-      setIsAuthenticated(true);
-      toast.success("Login successful");
-      router.push("/dashboard");
-    } catch (error: any) {
-      toast.error(error.response?.data?.detail || "Login failed");
-    } finally {
-      setIsLoading(false);
+      await executeLogin(values);
+    } catch (error) {
+      // Error is already handled by the useAsyncOperation hook
+      handleError(error);
     }
   };
 
   // Handle magic code request
   const onMagicCodeSubmit = async (values: z.infer<typeof magicCodeSchema>) => {
-    setIsLoading(true);
     try {
-      await requestMagicCode(values);
-      setMagicCodeRequested(true);
-      toast.success("Magic code sent to your email");
-    } catch (error: any) {
-      toast.error(error.response?.data?.email || "Failed to send magic code");
-    } finally {
-      setIsLoading(false);
+      await executeMagicCode(values);
+    } catch (error) {
+      // Error is already handled by the useAsyncOperation hook
+      handleError(error);
     }
   };
+
+  // Determine if any operation is loading
+  const isLoading = isLoginLoading || isMagicCodeLoading;
 
   return (
     <Card className="w-full">
@@ -195,8 +209,8 @@ export default function LoginPage() {
             ) : (
               <div className="text-center space-y-4">
                 <p>
-                  We've sent a magic code to your email. Please check your inbox
-                  and enter the code on the verification page.
+                  We&apos;ve sent a magic code to your email. Please check your
+                  inbox and enter the code on the verification page.
                 </p>
                 <Button
                   onClick={() => router.push("/auth/verify-code")}
@@ -211,7 +225,7 @@ export default function LoginPage() {
       </CardContent>
       <CardFooter className="flex flex-col space-y-2">
         <div className="text-sm text-center">
-          Don't have an account?{" "}
+          Don&apos;t have an account?{" "}
           <Link href="/auth/register" className="underline">
             Register
           </Link>

@@ -1,5 +1,7 @@
 import axios from "axios";
 import Cookies from "js-cookie";
+import { AuthError, ErrorCode, NetworkError } from "../error/types";
+import { createAppError } from "../error/handlers";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
@@ -21,7 +23,9 @@ apiClient.interceptors.request.use(
     return config;
   },
   (error) => {
-    return Promise.reject(error);
+    // Convert network errors to our custom error format
+    const appError = createAppError(error);
+    return Promise.reject(appError);
   }
 );
 
@@ -57,16 +61,40 @@ apiClient.interceptors.response.use(
           originalRequest.headers.Authorization = `Bearer ${response.data.access}`;
           return apiClient(originalRequest);
         }
-      } catch (refreshError) {
-        // If refresh fails, redirect to login
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (_refreshError) {
+        // Create a custom session error
+        const sessionError = new AuthError(
+          "Your session has expired. Please log in again.",
+          ErrorCode.SESSION_EXPIRED,
+          401
+        );
+
+        // If refresh fails, remove tokens and trigger session expired event
         Cookies.remove("access_token");
         Cookies.remove("refresh_token");
-        window.location.href = "/auth/login";
-        return Promise.reject(refreshError);
+
+        // Dispatch a session expired event that can be captured by our hooks
+        document.dispatchEvent(
+          new CustomEvent("auth:sessionExpired", { detail: sessionError })
+        );
+
+        return Promise.reject(sessionError);
       }
     }
 
-    return Promise.reject(error);
+    // For network errors, create a custom NetworkError
+    if (!error.response) {
+      const networkError = new NetworkError(
+        "Unable to connect to the server. Please check your internet connection.",
+        ErrorCode.NETWORK_OFFLINE
+      );
+      return Promise.reject(networkError);
+    }
+
+    // For all other errors, convert to our app error format
+    const appError = createAppError(error);
+    return Promise.reject(appError);
   }
 );
 

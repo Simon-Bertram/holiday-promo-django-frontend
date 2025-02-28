@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Sonner } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/sonner";
 import { Button } from "@/components/ui/button";
 import { getCurrentUser, logout } from "@/lib/api/auth";
 import { useAuthStore } from "@/lib/auth/store";
@@ -112,7 +112,7 @@ export default function DashboardLayout({
         </aside>
         <main className="flex-1 py-8 pl-6">{children}</main>
       </div>
-      <Sonner />
+      <Toaster />
     </div>
   );
 }
