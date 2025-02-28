@@ -1,6 +1,6 @@
 "use client";
 
-import { Sonner } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/sonner";
 import Link from "next/link";
 
 export default function AuthLayout({
@@ -22,7 +22,7 @@ export default function AuthLayout({
           <div className="w-full max-w-md space-y-6 py-12">{children}</div>
         </div>
       </main>
-      <Sonner />
+      <Toaster />
     </div>
   );
 }
