@@ -27,8 +27,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { login, requestMagicCode, checkUserExists } from "@/lib/api/auth";
-import { useAuthStore } from "@/lib/auth/store";
+import { requestMagicCode } from "@/lib/api/auth";
 import { useAsyncOperation, useFormError } from "@/lib/error";
 
 // Stage 1: Email validation schema
@@ -36,15 +35,9 @@ const emailSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
 });
 
-// Stage 3 (for admin/moderator): Password validation schema
-const passwordSchema = z.object({
-  password: z.string().min(1, { message: "Password is required" }),
-});
-
 export default function LoginPage() {
   const router = useRouter();
   const recaptchaRef = useRef<ReCAPTCHA>(null);
-  const { setUser, setIsAuthenticated } = useAuthStore();
   const { handleError } = useFormError();
 
   // Authentication flow stages
