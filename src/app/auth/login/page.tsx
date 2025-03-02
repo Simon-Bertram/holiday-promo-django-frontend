@@ -155,6 +155,8 @@ export default function LoginPage() {
               ref={recaptchaRef}
               sitekey={
                 process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ||
+                // This is Google's test key that always passes verification
+                // IMPORTANT: Replace with a real key before deployment to production
                 "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"
               }
               onChange={onCaptchaChange}

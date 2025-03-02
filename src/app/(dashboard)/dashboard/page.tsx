@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/auth/store";
 import {
   Card,
@@ -10,18 +12,36 @@ import {
 } from "@/components/ui/card";
 
 export default function DashboardPage() {
-  const { user } = useAuthStore();
+  const { user, isLoading } = useAuthStore();
+  const router = useRouter();
+
+  // Redirect users with role "USER" to the profile page
+  useEffect(() => {
+    if (!isLoading && user?.role === "USER") {
+      router.push("/profile");
+    }
+  }, [user, isLoading, router]);
+
+  // Show loading state while checking permissions
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  // If user is a regular user, don't render anything as they will be redirected
+  if (user?.role === "USER") {
+    return null; // Will redirect in useEffect
+  }
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Dashboard</h1>
+      <h1 className="text-3xl font-bold">Admin Dashboard</h1>
       <p className="text-muted-foreground">
-        Welcome to your dashboard. Here you can manage your account and access
-        various features.
+        Welcome to the admin dashboard. Here you can manage users and access
+        administrative features.
       </p>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
+      <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-3">
+        <Card className="min-w-md">
           <CardHeader>
             <CardTitle>Your Profile</CardTitle>
             <CardDescription>
@@ -46,8 +66,9 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
+        {/* Only admins can see this card */}
         {user?.role === "ADMIN" && (
-          <Card>
+          <Card className="min-w-md">
             <CardHeader>
               <CardTitle>Admin Tools</CardTitle>
               <CardDescription>Access admin-only features</CardDescription>
@@ -61,7 +82,18 @@ export default function DashboardPage() {
           </Card>
         )}
 
-        <Card>
+        {/* User management card only visible to admins and moderators */}
+        <Card className="min-w-md">
+          <CardHeader>
+            <CardTitle>User Management</CardTitle>
+            <CardDescription>View and manage system users</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p>View and manage users in the system.</p>
+          </CardContent>
+        </Card>
+
+        <Card className="min-w-md">
           <CardHeader>
             <CardTitle>Holiday Promotions</CardTitle>
             <CardDescription>View current holiday promotions</CardDescription>

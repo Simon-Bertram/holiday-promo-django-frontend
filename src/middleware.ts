@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 // Define protected routes that require authentication
-const protectedRoutes = ["/dashboard"];
-const adminRoutes = ["/dashboard/admin"];
+const protectedRoutes = ["/dashboard", "/profile"];
 const authRoutes = ["/auth/login", "/auth/register", "/auth/magic-code"];
 
 export function middleware(request: NextRequest) {
@@ -15,13 +14,8 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/auth/login", request.url));
   }
 
-  // Check if user is trying to access an admin route
-  if (adminRoutes.some((route) => pathname.startsWith(route))) {
-    // We need to verify if the user is an admin
-    // This would typically be done by decoding the JWT token
-    // For simplicity, we'll redirect to a "not authorized" page if needed
-    // In a real app, you would decode the JWT and check the role
-  }
+  // Note: Role-based access is now handled at the component level for /dashboard
+  // We'll keep the middleware focused on authentication checks
 
   // Redirect authenticated users away from auth pages
   if (authRoutes.some((route) => pathname === route) && token) {
@@ -33,5 +27,5 @@ export function middleware(request: NextRequest) {
 
 // Configure the middleware to run only on specific paths
 export const config = {
-  matcher: ["/dashboard/:path*", "/auth/:path*"],
+  matcher: ["/dashboard/:path*", "/auth/:path*", "/profile"],
 };
