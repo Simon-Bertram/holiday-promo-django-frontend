@@ -5,6 +5,7 @@ import {
   adminLogin,
   verifyMagicCode,
   logout as apiLogout,
+  deleteAccount as apiDeleteAccount,
 } from "../api/auth";
 
 interface AuthState {
@@ -20,6 +21,7 @@ interface AuthState {
   loginWithMagicCode: (data: { email: string; code: string }) => Promise<User>;
   adminLogin: (data: { email: string; password: string }) => Promise<User>;
   logout: () => void;
+  deleteAccount: () => Promise<void>;
   clearError: () => void;
 }
 
@@ -71,6 +73,23 @@ export const useAuthStore = create<AuthState>()(
       logout: () => {
         apiLogout(); // Clear cookies or tokens
         set({ user: null, isAuthenticated: false });
+      },
+
+      deleteAccount: async () => {
+        set({ isLoading: true, error: null });
+        try {
+          await apiDeleteAccount();
+          set({ user: null, isAuthenticated: false, isLoading: false });
+        } catch (error) {
+          set({
+            error:
+              error instanceof Error
+                ? error.message
+                : "Failed to delete account",
+            isLoading: false,
+          });
+          throw error;
+        }
       },
     }),
     {

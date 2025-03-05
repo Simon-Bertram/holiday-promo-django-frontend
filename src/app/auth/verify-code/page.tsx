@@ -83,9 +83,16 @@ export default function VerifyCodePage() {
         );
       }
     } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to verify code";
-      toast.error(errorMessage);
+      // Check for timeout errors specifically
+      if (error instanceof Error && error.message.includes("timeout")) {
+        toast.error(
+          "Request timed out. The server took too long to respond. Please try again."
+        );
+      } else {
+        const errorMessage =
+          error instanceof Error ? error.message : "Failed to verify code";
+        toast.error(errorMessage);
+      }
     } finally {
       setIsLoading(false);
     }

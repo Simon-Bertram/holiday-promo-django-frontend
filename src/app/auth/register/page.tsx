@@ -32,9 +32,6 @@ import { register } from "@/lib/api/auth";
 const registerSchema = z
   .object({
     email: z.string().email({ message: "Please enter a valid email address" }),
-    username: z
-      .string()
-      .min(3, { message: "Username must be at least 3 characters" }),
     password: z
       .string()
       .min(8, { message: "Password must be at least 8 characters" }),
@@ -56,7 +53,6 @@ export default function RegisterPage() {
     resolver: zodResolver(registerSchema),
     defaultValues: {
       email: "",
-      username: "",
       password: "",
       password_confirm: "",
       first_name: "",
@@ -72,9 +68,64 @@ export default function RegisterPage() {
       toast.success("Registration successful! Please log in.");
       router.push("/auth/login");
     } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Registration failed";
-      toast.error(errorMessage);
+      console.error("Registration error:", error);
+
+      // Define a type for our custom error structure
+      type CustomError = Error & {
+        fieldErrors?: Record<string, string[]>;
+      };
+
+      const err = error as CustomError;
+
+      // Check if the error has fieldErrors property (our custom format)
+      if (err.fieldErrors) {
+        // Process field errors
+        Object.entries(err.fieldErrors).forEach(([field, messages]) => {
+          // Only process fields that are in our form
+          if (
+            [
+              "email",
+              "password",
+              "password_confirm",
+              "first_name",
+              "last_name",
+            ].includes(field)
+          ) {
+            // Format field name for display
+            const formattedField = field
+              .split("_")
+              .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+              .join(" ");
+
+            // Ensure messages is an array
+            const messageArray = Array.isArray(messages)
+              ? messages
+              : [String(messages)];
+
+            // Set error in the form
+            const formField = field as keyof z.infer<typeof registerSchema>;
+            form.setError(formField, {
+              type: "server",
+              message: messageArray[0],
+            });
+
+            // Show toast for the error
+            messageArray.forEach((message) => {
+              toast.error(`${formattedField}: ${message}`, {
+                description: "Please try a different value",
+                duration: 5000,
+              });
+            });
+          }
+        });
+      } else {
+        // Handle generic error
+        const errorMessage = err.message || "Registration failed";
+        toast.error("Registration failed", {
+          description: errorMessage,
+          duration: 5000,
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -97,19 +148,6 @@ export default function RegisterPage() {
                   <FormLabel>Email</FormLabel>
                   <FormControl>
                     <Input placeholder="email@example.com" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="username"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Username</FormLabel>
-                  <FormControl>
-                    <Input placeholder="johndoe" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

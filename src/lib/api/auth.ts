@@ -1,10 +1,11 @@
 import apiClient from "./client";
 import Cookies from "js-cookie";
+import axios from "axios";
+import { NetworkError, ErrorCode } from "../error/types";
 
 export interface User {
   id: number;
   email: string;
-  username: string;
   first_name: string;
   last_name: string;
   role: "ADMIN" | "MODERATOR" | "USER";
@@ -23,7 +24,6 @@ export interface LoginCredentials {
 
 export interface RegisterData {
   email: string;
-  username: string;
   password: string;
   password_confirm: string;
   first_name?: string;
@@ -32,7 +32,7 @@ export interface RegisterData {
 
 export interface MagicCodeRequest {
   email: string;
-  captchaToken?: string;
+  captcha_token?: string;
 }
 
 export interface MagicCodeVerify {
@@ -89,7 +89,57 @@ export const register = async (data: RegisterData): Promise<User> => {
   try {
     const response = await apiClient.post<User>("/auth/register/", data);
     return response.data;
-  } catch (error) {
+  } catch (error: unknown) {
+    console.log("Registration API error:", error);
+
+    // Type for axios error
+    type AxiosErrorType = {
+      response?: {
+        data?: unknown;
+        status?: number;
+      };
+    };
+
+    const err = error as AxiosErrorType;
+
+    // Handle axios error with response data
+    if (err.response && err.response.data) {
+      // Format the error in a more usable way
+      const errorData = err.response.data;
+
+      // If the error data contains field errors (like password validation errors)
+      if (typeof errorData === "object" && errorData !== null) {
+        const fieldErrors: Record<string, string[]> = {};
+
+        // Process each field error
+        Object.entries(errorData as Record<string, unknown>).forEach(
+          ([field, messages]) => {
+            if (Array.isArray(messages)) {
+              fieldErrors[field] = messages.map((msg) => String(msg));
+            } else if (messages) {
+              // Handle case where message might not be an array
+              fieldErrors[field] = [String(messages)];
+            }
+          }
+        );
+
+        // If we found field errors, create a custom error with them
+        if (Object.keys(fieldErrors).length > 0) {
+          const validationError = new Error("Validation failed");
+          (
+            validationError as Error & { fieldErrors: Record<string, string[]> }
+          ).fieldErrors = fieldErrors;
+          throw validationError;
+        }
+      }
+
+      // If it's a string message or other format
+      if (typeof errorData === "string") {
+        throw new Error(errorData);
+      }
+    }
+
+    // If we couldn't extract specific error info, just throw the original error
     throw error;
   }
 };
@@ -123,6 +173,13 @@ export const verifyMagicCode = async (data: MagicCodeVerify): Promise<User> => {
 
     return response.data.user;
   } catch (error) {
+    // Check if it's a timeout error
+    if (axios.isAxiosError(error) && error.code === "ECONNABORTED") {
+      throw new NetworkError(
+        "Request timed out. Please try again.",
+        ErrorCode.REQUEST_TIMEOUT
+      );
+    }
     throw error;
   }
 };
@@ -156,6 +213,21 @@ export const adminLogin = async (data: AdminLoginData): Promise<User> => {
     Cookies.set("refresh_token", response.data.refresh);
 
     return response.data.user;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Delete user account
+export const deleteAccount = async (): Promise<{ message: string }> => {
+  try {
+    const response = await apiClient.post<{ message: string }>("/user/delete/");
+
+    // Clear tokens and cookies
+    Cookies.remove("access_token");
+    Cookies.remove("refresh_token");
+
+    return response.data;
   } catch (error) {
     throw error;
   }

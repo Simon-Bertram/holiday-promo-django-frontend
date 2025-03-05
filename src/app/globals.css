@@ -2,7 +2,14 @@
 
 @plugin "tailwindcss-animate";
 
-@custom-variant dark (&:is(.dark *));
+/* Fix for the :host selector error */
+@custom-variant dark (.dark, :where(.dark *));
+
+/* Fix for -webkit-text-size-adjust error */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
 
 @theme {
   --font-sans: var(--font-geist-sans);

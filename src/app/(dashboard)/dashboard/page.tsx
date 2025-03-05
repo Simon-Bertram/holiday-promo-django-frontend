@@ -51,10 +51,6 @@ export default function DashboardPage() {
           <CardContent>
             <div className="space-y-2">
               <div className="flex justify-between">
-                <span className="font-medium">Username:</span>
-                <span>{user?.username}</span>
-              </div>
-              <div className="flex justify-between">
                 <span className="font-medium">Email:</span>
                 <span>{user?.email}</span>
               </div>

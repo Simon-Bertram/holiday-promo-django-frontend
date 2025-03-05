@@ -82,7 +82,7 @@ export default function LoginPage() {
         // After CAPTCHA verification, check if user exists and send magic code
         await executeRequestMagicCode({
           email: userEmail,
-          captchaToken: token,
+          captcha_token: token,
         });
       } catch (error) {
         // For security, don't reveal if email doesn't exist
