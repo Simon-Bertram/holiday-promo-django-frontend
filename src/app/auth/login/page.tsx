@@ -27,7 +27,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { requestMagicCode } from "@/lib/api/auth";
+import { authService } from "@/lib/api/auth";
 import { useAsyncOperation, useFormError } from "@/lib/error";
 
 // Stage 1: Email validation schema
@@ -39,6 +39,7 @@ export default function LoginPage() {
   const router = useRouter();
   const recaptchaRef = useRef<ReCAPTCHA>(null);
   const { handleError } = useFormError();
+  const { requestMagicCode } = authService;
 
   // Authentication flow stages
   enum Stage {

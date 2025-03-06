@@ -2,32 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { toast } from "sonner";
-
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { verifyMagicCode } from "@/lib/api/auth";
 import { useAuthStore } from "@/lib/auth/store";
+import { VerifyCodeForm } from "./verify-code-form";
 
 // Form validation schema for magic code verification
 const verifyCodeSchema = z.object({
@@ -40,6 +20,7 @@ export default function VerifyCodePage() {
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const { setUser, setIsAuthenticated } = useAuthStore();
+  const { loginWithMagicCode } = useAuthStore();
 
   // Get email from URL params if available
   const emailFromParams = searchParams.get("email");
@@ -64,26 +45,32 @@ export default function VerifyCodePage() {
   const onSubmit = async (values: z.infer<typeof verifyCodeSchema>) => {
     setIsLoading(true);
     try {
-      const user = await verifyMagicCode(values);
+      const user = await loginWithMagicCode(values);
 
-      // For regular users, complete authentication and redirect to profile
-      if (user.role === "USER") {
-        setUser(user);
-        setIsAuthenticated(true);
-        toast.success("Login successful");
-        router.push("/profile");
-      }
-      // For admin/moderator users, redirect to password verification
-      else if (user.role === "ADMIN" || user.role === "MODERATOR") {
-        toast.success(
-          "Code verified successfully. Please enter your password to complete login"
-        );
-        router.push(
-          `/auth/admin-login?email=${encodeURIComponent(values.email)}`
-        );
+      // Check if the user object exists
+      if (user) {
+        // For regular users, complete authentication and redirect to profile
+        if (user.role === "USER") {
+          setUser(user);
+          setIsAuthenticated(true);
+          toast.success("Login successful");
+          router.push("/profile");
+        }
+        // For admin/moderator users, redirect to password verification
+        else if (user.role === "ADMIN" || user.role === "MODERATOR") {
+          toast.success(
+            "Code verified successfully. Please enter your password to complete login"
+          );
+          router.push(
+            `/auth/admin-login?email=${encodeURIComponent(values.email)}`
+          );
+        }
+      } else {
+        // Handle case where user data is missing
+        console.error("Invalid response format: missing user data");
+        toast.error("Unexpected response format. Please try again.");
       }
     } catch (error: unknown) {
-      // Check for timeout errors specifically
       if (error instanceof Error && error.message.includes("timeout")) {
         toast.error(
           "Request timed out. The server took too long to respond. Please try again."
@@ -99,60 +86,6 @@ export default function VerifyCodePage() {
   };
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="text-2xl">Verify Code</CardTitle>
-        <CardDescription>
-          Enter the 5-digit verification code sent to your email
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input placeholder="email@example.com" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="code"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Verification Code</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Enter the 5-digit code"
-                      maxLength={5}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Verifying..." : "Verify Code"}
-            </Button>
-          </form>
-        </Form>
-      </CardContent>
-      <CardFooter className="flex flex-col space-y-2">
-        <div className="text-sm text-center">
-          {"Didn't receive a code? "}
-          <Link href="/auth/login" className="underline">
-            Try again
-          </Link>
-        </div>
-      </CardFooter>
-    </Card>
+    <VerifyCodeForm form={form} onSubmit={onSubmit} isLoading={isLoading} />
   );
 }

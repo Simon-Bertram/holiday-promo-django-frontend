@@ -1,12 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import {
-  User,
-  adminLogin,
-  verifyMagicCode,
-  logout as apiLogout,
-  deleteAccount as apiDeleteAccount,
-} from "../api/auth";
+import { User } from "../api/auth";
+import authService from "../api/authService";
 
 interface AuthState {
   // State
@@ -43,7 +38,8 @@ export const useAuthStore = create<AuthState>()(
       loginWithMagicCode: async (data) => {
         set({ isLoading: true, error: null });
         try {
-          const user = await verifyMagicCode(data);
+          const response = await authService.verifyMagicCode(data);
+          const user = response.user;
           set({ user, isAuthenticated: true, isLoading: false });
           return user;
         } catch (error) {
@@ -58,7 +54,8 @@ export const useAuthStore = create<AuthState>()(
       adminLogin: async (data) => {
         set({ isLoading: true, error: null });
         try {
-          const user = await adminLogin(data);
+          const response = await authService.adminLogin(data);
+          const user = response.user;
           set({ user, isAuthenticated: true, isLoading: false });
           return user;
         } catch (error) {
@@ -71,14 +68,14 @@ export const useAuthStore = create<AuthState>()(
       },
 
       logout: () => {
-        apiLogout(); // Clear cookies or tokens
+        authService.logout();
         set({ user: null, isAuthenticated: false });
       },
 
       deleteAccount: async () => {
         set({ isLoading: true, error: null });
         try {
-          await apiDeleteAccount();
+          await authService.deleteAccount();
           set({ user: null, isAuthenticated: false, isLoading: false });
         } catch (error) {
           set({

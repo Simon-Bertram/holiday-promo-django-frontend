@@ -24,9 +24,7 @@ apiClient.interceptors.request.use(
     return config;
   },
   (error) => {
-    // Convert network errors to our custom error format
-    const appError = createAppError(error);
-    return Promise.reject(appError);
+    return Promise.reject(createAppError(error));
   }
 );
 
@@ -36,7 +34,10 @@ apiClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // If error is 401 and we haven't tried to refresh the token yet
+    // Handle token refresh only if:
+    // 1. Response status is 401 (Unauthorized)
+    // 2. We haven't already tried to refresh the token for this request
+    // 3. We have a refresh token available
     if (
       error.response?.status === 401 &&
       !originalRequest._retry &&
@@ -52,8 +53,10 @@ apiClient.interceptors.response.use(
         });
 
         // If token refresh is successful, save the new tokens
-        if (response.data) {
+        if (response.data?.access) {
           Cookies.set("access_token", response.data.access);
+
+          // Only update refresh token if a new one was provided
           if (response.data.refresh) {
             Cookies.set("refresh_token", response.data.refresh);
           }
@@ -63,40 +66,48 @@ apiClient.interceptors.response.use(
           return apiClient(originalRequest);
         }
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      } catch (_refreshError) {
-        // Create a custom session error
-        const sessionError = new AuthError(
-          "Your session has expired. Please log in again.",
-          ErrorCode.SESSION_EXPIRED,
-          401
+      } catch (error) {
+        // If refresh fails, clear tokens and notify about session expiration
+        handleSessionExpiration();
+        return Promise.reject(
+          new AuthError(
+            "Your session has expired. Please log in again.",
+            ErrorCode.SESSION_EXPIRED,
+            401
+          )
         );
-
-        // If refresh fails, remove tokens and trigger session expired event
-        Cookies.remove("access_token");
-        Cookies.remove("refresh_token");
-
-        // Dispatch a session expired event that can be captured by our hooks
-        document.dispatchEvent(
-          new CustomEvent("auth:sessionExpired", { detail: sessionError })
-        );
-
-        return Promise.reject(sessionError);
       }
     }
 
-    // For network errors, create a custom NetworkError
+    // Handle network errors
     if (!error.response) {
-      const networkError = new NetworkError(
-        "Unable to connect to the server. Please check your internet connection.",
-        ErrorCode.NETWORK_OFFLINE
+      return Promise.reject(
+        new NetworkError(
+          "Unable to connect to the server. Please check your internet connection.",
+          ErrorCode.NETWORK_OFFLINE
+        )
       );
-      return Promise.reject(networkError);
     }
 
     // For all other errors, convert to our app error format
-    const appError = createAppError(error);
-    return Promise.reject(appError);
+    return Promise.reject(createAppError(error));
   }
 );
+
+// Helper function to handle session expiration
+function handleSessionExpiration() {
+  // Clear tokens
+  Cookies.remove("access_token");
+  Cookies.remove("refresh_token");
+
+  // Dispatch event for components to react to
+  document.dispatchEvent(
+    new CustomEvent("auth:sessionExpired", {
+      detail: {
+        message: "Your session has expired. Please log in again.",
+      },
+    })
+  );
+}
 
 export default apiClient;

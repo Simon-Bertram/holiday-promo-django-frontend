@@ -63,10 +63,29 @@ export default function AdminLoginPage() {
 
     try {
       // Call the API to verify admin password
-      const user = await adminLogin({
-        email,
+      const response = await adminLogin({
+        email: email || "",
         password: values.password,
       });
+
+      console.log("Full API response:", response);
+
+      // Check if response and response.user exist
+      if (!response || !response.user) {
+        console.error("Invalid response structure:", response);
+        toast.error("Received invalid response from server");
+        return;
+      }
+
+      const user = response.user;
+      console.log("User object:", user);
+
+      // Verify user has required properties
+      if (!user.email) {
+        console.error("User object missing email:", user);
+        toast.error("User data is incomplete");
+        return;
+      }
 
       // Set user in auth store
       setUser(user);
@@ -76,7 +95,7 @@ export default function AdminLoginPage() {
       toast.success("Authentication successful");
 
       // Redirect to admin dashboard or appropriate page
-      router.push("/admin/dashboard");
+      router.push("/dashboard");
     } catch (error) {
       console.error("Login error:", error);
       toast.error(
