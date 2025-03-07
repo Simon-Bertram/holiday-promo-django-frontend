@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import { User } from "../api/auth";
-import authService from "../api/authService";
+import { User } from "../../api/auth";
+import authService from "../../api/authService";
 
 interface AuthState {
   // State
