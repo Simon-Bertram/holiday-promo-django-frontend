@@ -1,7 +1,7 @@
 import { createStore } from "zustand/vanilla"; // Import from zustand/vanilla
 import dashboardService from "@/shared/lib/api/dashboardService";
 
-interface DashboardState {
+export interface DashboardState {
   regularUserCount: number | null;
   isLoadingUserCount: boolean;
   userCountError: string | null;

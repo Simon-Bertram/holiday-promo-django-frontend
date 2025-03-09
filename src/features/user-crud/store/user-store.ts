@@ -2,7 +2,7 @@ import { createStore } from "zustand/vanilla"; // Import from zustand/vanilla
 import usersService from "@/shared/lib/api/services/user-service";
 import { User } from "@/features/user-crud/types/user-type";
 
-interface UsersState {
+export interface UsersState {
   users: User[];
   isLoading: boolean;
   error: string | null;

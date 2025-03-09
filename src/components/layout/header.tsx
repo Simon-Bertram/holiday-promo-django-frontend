@@ -2,10 +2,14 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { useAuthStore } from "@/features/auth/store/auth-store";
+import { useAuthStore } from "@/features/auth/store/auth-store-provider";
 
 export function Header() {
-  const { user, isAuthenticated, logout } = useAuthStore();
+  const { user, isAuthenticated, logout } = useAuthStore((state) => ({
+    user: state.user,
+    isAuthenticated: state.isAuthenticated,
+    logout: state.logout,
+  }));
 
   const handleLogout = async () => {
     await logout();

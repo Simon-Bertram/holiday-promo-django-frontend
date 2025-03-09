@@ -3,7 +3,7 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import { User } from "../hooks/use-auth";
 import authService from "../../../shared/lib/api/services/auth-service";
 
-interface AuthState {
+export interface AuthState {
   // State
   user: User | null;
   isAuthenticated: boolean;
