@@ -1,4 +1,4 @@
-import { create } from "zustand";
+import { createStore } from "zustand/vanilla"; // Import from zustand/vanilla
 import dashboardService from "@/shared/lib/api/dashboardService";
 
 interface DashboardState {
@@ -8,27 +8,33 @@ interface DashboardState {
   fetchRegularUserCount: () => Promise<void>;
 }
 
-export const useDashboardStore = create<DashboardState>((set) => ({
+const initialState = {
   regularUserCount: null,
   isLoadingUserCount: false,
   userCountError: null,
+};
 
-  fetchRegularUserCount: async () => {
-    set({ isLoadingUserCount: true, userCountError: null });
+// Factory function
+export const createDashboardStore = () =>
+  createStore<DashboardState>((set) => ({
+    ...initialState,
 
-    try {
-      const data = await dashboardService.getUserCount();
-      set({
-        regularUserCount: data.regular_user_count,
-        isLoadingUserCount: false,
-      });
-    } catch (error) {
-      console.error("Error fetching user count:", error);
-      set({
-        userCountError:
-          error instanceof Error ? error.message : "Unknown error",
-        isLoadingUserCount: false,
-      });
-    }
-  },
-}));
+    fetchRegularUserCount: async () => {
+      set({ isLoadingUserCount: true, userCountError: null });
+
+      try {
+        const data = await dashboardService.getUserCount();
+        set({
+          regularUserCount: data.regular_user_count,
+          isLoadingUserCount: false,
+        });
+      } catch (error) {
+        console.error("Error fetching user count:", error);
+        set({
+          userCountError:
+            error instanceof Error ? error.message : "Unknown error",
+          isLoadingUserCount: false,
+        });
+      }
+    },
+  }));
