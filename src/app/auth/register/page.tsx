@@ -26,7 +26,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { register } from "@/lib/api/auth";
+import { register } from "@/features/auth/hooks/use-auth";
 
 // Form validation schema for registration
 const registerSchema = z

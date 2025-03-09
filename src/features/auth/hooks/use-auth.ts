@@ -46,7 +46,7 @@ export interface UserExistsResponse {
 }
 
 // Export the service (this is what your Zustand store will use)
-export { default as authService } from "./authService";
+export { default as authService } from "../../../shared/lib/api/services/auth-service";
 
 // Keep the logout function here for backward compatibility
 import Cookies from "js-cookie";
@@ -56,8 +56,8 @@ export const logout = (): void => {
 };
 
 // Export the deleteAccount function for backward compatibility
-import apiClient from "./client";
-import { endpoints } from "./base-config";
+import apiClient from "../../../shared/lib/api/client";
+import { endpoints } from "../../../shared/lib/api/base-config";
 
 export const deleteAccount = async (): Promise<{ message: string }> => {
   const response = await apiClient.post<{ message: string }>(

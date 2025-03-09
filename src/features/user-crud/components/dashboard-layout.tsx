@@ -1,5 +1,5 @@
-import { User as AuthUser } from "@/lib/api/auth";
-import UserStatsCard from "./user-stats-card";
+import { User as AuthUser } from "@/features/auth/hooks/use-auth";
+import UserStatsCard from "../../../app/(dashboard)/dashboard/components/user-stats-card";
 
 interface DashboardLayoutProps {
   user: AuthUser;

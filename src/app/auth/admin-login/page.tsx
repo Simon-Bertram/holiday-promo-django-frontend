@@ -24,7 +24,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { adminLogin } from "@/lib/api/auth";
+import { adminLogin } from "@/features/auth/hooks/use-auth";
 import { useAuthStore } from "@/lib/auth/store";
 
 // Password validation schema

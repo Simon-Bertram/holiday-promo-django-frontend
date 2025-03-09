@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { User } from "@/lib/types/user";
+import { User } from "@/features/user-crud/types/user-type";
 import { useUsersStore } from "@/lib/users/store";
 import { useEffect } from "react";
 import {

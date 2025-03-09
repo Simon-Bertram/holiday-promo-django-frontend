@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { useAuthStore } from "@/lib/auth/store";
+import { useAuthStore } from "@/features/auth/store/auth-store";
 
 export function Header() {
   const { user, isAuthenticated, logout } = useAuthStore();
@@ -22,7 +22,9 @@ export function Header() {
             <>
               <div className="flex items-center space-x-4">
                 <span className="text-sm">
-                  Welcome, {user.first_name || user.email.split("@")[0]}
+                  Welcome,{" "}
+                  {user.first_name ||
+                    (user.email ? user.email.split("@")[0] : "User")}
                 </span>
                 {user.role === "ADMIN" || user.role === "MODERATOR" ? (
                   <Link href="/dashboard">

@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import dashboardService from "@/lib/api/dashboardService";
+import dashboardService from "@/shared/lib/api/dashboardService";
 
 interface DashboardState {
   regularUserCount: number | null;

@@ -1,6 +1,6 @@
-import apiClient from "./client";
-import { endpoints } from "./base-config";
-import { User } from "@/lib/types/user";
+import apiClient from "../client";
+import { endpoints } from "../base-config";
+import { User } from "@/features/user-crud/types/user-type";
 
 interface UsersResponse {
   users: User[];

@@ -27,8 +27,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { authService } from "@/lib/api/auth";
-import { useAsyncOperation, useFormError } from "@/lib/error";
+import { authService } from "@/features/auth/hooks/use-auth";
+import { useAsyncOperation, useFormError } from "@/shared/lib/error";
 
 // Stage 1: Email validation schema
 const emailSchema = z.object({

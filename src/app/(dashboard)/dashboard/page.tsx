@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/auth/store";
 import { useDashboardStore } from "@/lib/dashboard/store";
-import DashboardLayout from "./components/dashboard-layout";
+import DashboardLayout from "../../../features/user-crud/components/dashboard-layout";
 
 export default function DashboardPage() {
   const { user, isLoading } = useAuthStore();

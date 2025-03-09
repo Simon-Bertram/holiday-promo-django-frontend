@@ -1,4 +1,4 @@
-import apiClient from "./client";
+import apiClient from "../client";
 import {
   User,
   LoginCredentials,
@@ -8,10 +8,10 @@ import {
   AdminLoginData,
   AuthResponse,
   UserExistsResponse,
-} from "./auth"; // Import types from the original auth.ts
-import { endpoints } from "./base-config";
+} from "../../../../features/auth/hooks/use-auth"; // Import types from the original auth.ts
+import { endpoints } from "../base-config";
 import axios from "axios";
-import { NetworkError, ErrorCode } from "../error/types";
+import { NetworkError, ErrorCode } from "../../error/types";
 import Cookies from "js-cookie";
 
 const authService = {

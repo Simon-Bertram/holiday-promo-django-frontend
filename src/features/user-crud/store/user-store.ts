@@ -1,6 +1,6 @@
 import { create } from "zustand";
-import usersService from "@/lib/api/usersService";
-import { User } from "@/lib/types/user";
+import usersService from "@/shared/lib/api/services/user-service";
+import { User } from "@/features/user-crud/types/user-type";
 
 interface UsersState {
   users: User[];
