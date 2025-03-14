@@ -1,7 +1,11 @@
+"use client";
+
 import { createStore } from "zustand/vanilla";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { User } from "../hooks/use-auth";
 import authService from "../../../shared/lib/api/services/auth-service";
+import { createContext, useContext, useRef } from "react";
+import { useStore } from "zustand";
 
 export interface AuthState {
   // State
@@ -100,13 +104,65 @@ export const createAuthStore = () => {
       }),
       {
         name: "auth-storage",
-        storage: createJSONStorage(() => localStorage),
-        // Don't persist loading state or errors
-        partialize: (state) => ({
-          user: state.user,
-          isAuthenticated: state.isAuthenticated,
+        storage: createJSONStorage(() => {
+          // Check if window is defined (browser) or not (server)
+          if (typeof window !== "undefined") {
+            return localStorage;
+          }
+          return {
+            getItem: () => null,
+            setItem: () => {},
+            removeItem: () => {},
+          };
         }),
+        // Don't persist loading state or errors, cache snapshot result to avoid infinite loop
+        partialize: (() => {
+          let cachedSnapshot: { user: User | null; isAuthenticated: boolean } =
+            { user: null, isAuthenticated: false };
+          let cachedKey = JSON.stringify(cachedSnapshot);
+          return (state: AuthState) => {
+            const currentSnapshot = {
+              user: state.user,
+              isAuthenticated: state.isAuthenticated,
+            };
+            const currentKey = JSON.stringify(currentSnapshot);
+            if (currentKey === cachedKey) {
+              return cachedSnapshot;
+            }
+            cachedSnapshot = currentSnapshot;
+            cachedKey = currentKey;
+            return cachedSnapshot;
+          };
+        })(),
       }
     )
   );
 };
+
+// Create a context to hold the store
+const AuthStoreContext = createContext<ReturnType<
+  typeof createAuthStore
+> | null>(null);
+
+// Provider component that creates the store
+export function AuthStoreProvider({ children }: { children: React.ReactNode }) {
+  const storeRef = useRef<ReturnType<typeof createAuthStore> | null>(null);
+  if (!storeRef.current) {
+    storeRef.current = createAuthStore();
+  }
+
+  return (
+    <AuthStoreContext.Provider value={storeRef.current}>
+      {children}
+    </AuthStoreContext.Provider>
+  );
+}
+
+// Hook to use the auth store
+export function useAuthStore<T>(selector: (state: AuthState) => T): T {
+  const store = useContext(AuthStoreContext);
+  if (!store) {
+    throw new Error("useAuthStore must be used within AuthStoreProvider");
+  }
+  return useStore(store, selector);
+}

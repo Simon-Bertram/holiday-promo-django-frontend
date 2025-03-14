@@ -1,23 +1,21 @@
 "use client";
 
-import { createContext, ReactNode, useContext, useRef, type FC } from "react";
+import { createContext, useContext, useRef, type ReactNode } from "react";
 import { useStore } from "zustand";
-import { createUsersStore } from "@/features/user-crud/store/user-store";
-import type { UsersState } from "@/features/user-crud/store/user-store";
-type UsersStoreApi = ReturnType<typeof createUsersStore>;
+import { createUsersStore } from "./user-store";
+import type { UsersState } from "./user-store";
 
-const UsersStoreContext = createContext<UsersStoreApi | undefined>(undefined);
+// Create context for the store
+const UsersStoreContext = createContext<ReturnType<
+  typeof createUsersStore
+> | null>(null);
 
-interface UsersStoreProviderProps {
-  children: ReactNode;
-}
+// Simple provider component
+export function UsersStoreProvider({ children }: { children: ReactNode }) {
+  const storeRef = useRef<ReturnType<typeof createUsersStore> | null>(null);
 
-export const UsersStoreProvider: FC<UsersStoreProviderProps> = ({
-  children,
-}) => {
-  const storeRef = useRef<UsersStoreApi | null>(null);
   if (!storeRef.current) {
-    storeRef.current = createUsersStore(); // Create a new store instance
+    storeRef.current = createUsersStore();
   }
 
   return (
@@ -25,13 +23,15 @@ export const UsersStoreProvider: FC<UsersStoreProviderProps> = ({
       {children}
     </UsersStoreContext.Provider>
   );
-};
+}
 
-// Custom hook to use the store
-export const useUsersStore = <T,>(selector: (state: UsersState) => T): T => {
+// Simple hook to use the store
+export function useUsersStore<T>(selector: (state: UsersState) => T): T {
   const store = useContext(UsersStoreContext);
+
   if (!store) {
-    throw new Error("Missing UsersStoreProvider");
+    throw new Error("useUsersStore must be used within UsersStoreProvider");
   }
+
   return useStore(store, selector);
-};
+}

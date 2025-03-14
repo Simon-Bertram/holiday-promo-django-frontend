@@ -5,11 +5,9 @@ import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/features/auth/store/auth-store-provider";
 
 export function Header() {
-  const { user, isAuthenticated, logout } = useAuthStore((state) => ({
-    user: state.user,
-    isAuthenticated: state.isAuthenticated,
-    logout: state.logout,
-  }));
+  const user = useAuthStore((state) => state.user);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const logout = useAuthStore((state) => state.logout);
 
   const handleLogout = async () => {
     await logout();
@@ -31,17 +29,13 @@ export function Header() {
                     (user.email ? user.email.split("@")[0] : "User")}
                 </span>
                 {user.role === "ADMIN" || user.role === "MODERATOR" ? (
-                  <Link href="/dashboard">
-                    <Button variant="outline" size="sm">
-                      Dashboard
-                    </Button>
-                  </Link>
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href="/dashboard">Dashboard</Link>
+                  </Button>
                 ) : (
-                  <Link href="/profile">
-                    <Button variant="outline" size="sm">
-                      Profile
-                    </Button>
-                  </Link>
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href="/profile">Profile</Link>
+                  </Button>
                 )}
                 <Button variant="outline" size="sm" onClick={handleLogout}>
                   Logout

@@ -1,25 +1,21 @@
 "use client";
 
-import { createContext, ReactNode, useContext, useRef, type FC } from "react";
+import { createContext, useContext, useRef, type ReactNode } from "react";
 import { useStore } from "zustand";
-import { createDashboardStore } from "@/features/dashboard/store/dashboard-store";
-import type { DashboardState } from "@/features/dashboard/store/dashboard-store";
-type DashboardStoreApi = ReturnType<typeof createDashboardStore>;
+import { createDashboardStore } from "./dashboard-store";
+import type { DashboardState } from "./dashboard-store";
 
-const DashboardStoreContext = createContext<DashboardStoreApi | undefined>(
-  undefined
-);
+// Create context for the store
+const DashboardStoreContext = createContext<ReturnType<
+  typeof createDashboardStore
+> | null>(null);
 
-interface DashboardStoreProviderProps {
-  children: ReactNode;
-}
+// Simple provider component
+export function DashboardStoreProvider({ children }: { children: ReactNode }) {
+  const storeRef = useRef<ReturnType<typeof createDashboardStore> | null>(null);
 
-export const DashboardStoreProvider: FC<DashboardStoreProviderProps> = ({
-  children,
-}) => {
-  const storeRef = useRef<DashboardStoreApi | null>(null);
   if (!storeRef.current) {
-    storeRef.current = createDashboardStore(); // Create a new store instance
+    storeRef.current = createDashboardStore();
   }
 
   return (
@@ -27,15 +23,19 @@ export const DashboardStoreProvider: FC<DashboardStoreProviderProps> = ({
       {children}
     </DashboardStoreContext.Provider>
   );
-};
+}
 
-// Custom hook to use the store
-export const useDashboardStore = <T,>(
+// Simple hook to use the store
+export function useDashboardStore<T>(
   selector: (state: DashboardState) => T
-): T => {
+): T {
   const store = useContext(DashboardStoreContext);
+
   if (!store) {
-    throw new Error("Missing DashboardStoreProvider");
+    throw new Error(
+      "useDashboardStore must be used within DashboardStoreProvider"
+    );
   }
+
   return useStore(store, selector);
-};
+}

@@ -1,22 +1,21 @@
 "use client";
 
-import { createContext, ReactNode, useContext, useRef, type FC } from "react";
+import { createContext, useContext, useRef, type ReactNode } from "react";
 import { useStore } from "zustand";
-import { createAuthStore } from "@/features/auth/store/auth-store"; // Import factory
-import type { AuthState } from "@/features/auth/store/auth-store";
+import { createAuthStore } from "./auth-store";
+import type { AuthState } from "./auth-store";
 
-type AuthStoreApi = ReturnType<typeof createAuthStore>;
+// Create context for the store
+const AuthStoreContext = createContext<ReturnType<
+  typeof createAuthStore
+> | null>(null);
 
-const AuthStoreContext = createContext<AuthStoreApi | undefined>(undefined);
+// Simple provider component
+export function AuthStoreProvider({ children }: { children: ReactNode }) {
+  const storeRef = useRef<ReturnType<typeof createAuthStore> | null>(null);
 
-interface AuthStoreProviderProps {
-  children: ReactNode;
-}
-
-export const AuthStoreProvider: FC<AuthStoreProviderProps> = ({ children }) => {
-  const storeRef = useRef<AuthStoreApi | null>(null);
   if (!storeRef.current) {
-    storeRef.current = createAuthStore(); // Create a new store instance
+    storeRef.current = createAuthStore();
   }
 
   return (
@@ -24,13 +23,15 @@ export const AuthStoreProvider: FC<AuthStoreProviderProps> = ({ children }) => {
       {children}
     </AuthStoreContext.Provider>
   );
-};
+}
 
-// Custom hook to use the store
-export const useAuthStore = <T,>(selector: (state: AuthState) => T): T => {
+// Simple hook to use the store
+export function useAuthStore<T>(selector: (state: AuthState) => T): T {
   const store = useContext(AuthStoreContext);
+
   if (!store) {
-    throw new Error("Missing AuthStoreProvider");
+    throw new Error("useAuthStore must be used within AuthStoreProvider");
   }
+
   return useStore(store, selector);
-};
+}

@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { toast } from "sonner";
-import { useAuthStore } from "@/lib/auth/store";
+import { useAuthStore } from "@/features/auth/store/auth-store-provider";
 import { VerifyCodeForm } from "./verify-code-form";
 
 // Form validation schema for magic code verification
@@ -19,8 +19,9 @@ export default function VerifyCodePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
-  const { setUser, setIsAuthenticated } = useAuthStore();
-  const { loginWithMagicCode } = useAuthStore();
+  const setUser = useAuthStore((state) => state.setUser);
+  const setIsAuthenticated = useAuthStore((state) => state.setIsAuthenticated);
+  const loginWithMagicCode = useAuthStore((state) => state.loginWithMagicCode);
 
   // Get email from URL params if available
   const emailFromParams = searchParams.get("email");
