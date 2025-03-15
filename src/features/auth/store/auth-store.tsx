@@ -6,6 +6,7 @@ import { User } from "../hooks/use-auth";
 import authService from "../../../shared/lib/api/services/auth-service";
 import { createContext, useContext, useRef } from "react";
 import { useStore } from "zustand";
+import Cookies from "js-cookie";
 
 export interface AuthState {
   // State
@@ -18,7 +19,6 @@ export interface AuthState {
   setUser: (user: User | null) => void;
   setIsAuthenticated: (value: boolean) => void;
   loginWithMagicCode: (data: { email: string; code: string }) => Promise<User>;
-  adminLogin: (data: { email: string; password: string }) => Promise<User>;
   logout: () => void;
   deleteAccount: () => Promise<void>;
   clearError: () => void;
@@ -35,12 +35,28 @@ const initialState: Pick<
   error: null,
 };
 
+export interface PreloadedAuthState {
+  user?: User | null;
+  isAuthenticated?: boolean;
+  isLoading?: boolean;
+  error?: string | null;
+}
+
+// Add cookie configuration
+const COOKIE_OPTIONS = {
+  secure: process.env.NODE_ENV === "production", // Only use secure in production
+  sameSite: "strict" as const,
+  expires: 7, // 7 days
+  path: "/",
+};
+
 // Factory function to create a new store
-export const createAuthStore = () => {
+export const createAuthStore = (preloadedState: PreloadedAuthState = {}) => {
   return createStore<AuthState>()(
     persist(
       (set) => ({
         ...initialState, // Use the initial state
+        ...preloadedState, // Apply preloaded state
 
         // Simple setters
         setUser: (user) => set({ user }),
@@ -52,22 +68,15 @@ export const createAuthStore = () => {
           set({ isLoading: true, error: null });
           try {
             const response = await authService.verifyMagicCode(data);
-            const user = response.user;
-            set({ user, isAuthenticated: true, isLoading: false });
-            return user;
-          } catch (error) {
-            set({
-              error: error instanceof Error ? error.message : "Failed to login",
-              isLoading: false,
-            });
-            throw error;
-          }
-        },
 
-        adminLogin: async (data) => {
-          set({ isLoading: true, error: null });
-          try {
-            const response = await authService.adminLogin(data);
+            // Store tokens in cookies with enhanced security
+            if (response.access) {
+              Cookies.set("access_token", response.access, COOKIE_OPTIONS);
+            }
+            if (response.refresh) {
+              Cookies.set("refresh_token", response.refresh, COOKIE_OPTIONS);
+            }
+
             const user = response.user;
             set({ user, isAuthenticated: true, isLoading: false });
             return user;
@@ -81,6 +90,9 @@ export const createAuthStore = () => {
         },
 
         logout: () => {
+          // Remove cookies when logging out
+          Cookies.remove("access_token", { path: "/" });
+          Cookies.remove("refresh_token", { path: "/" });
           authService.logout();
           set({ user: null, isAuthenticated: false });
         },
@@ -140,15 +152,21 @@ export const createAuthStore = () => {
 };
 
 // Create a context to hold the store
-const AuthStoreContext = createContext<ReturnType<
-  typeof createAuthStore
-> | null>(null);
+export type AuthStoreType = ReturnType<typeof createAuthStore>;
+
+const AuthStoreContext = createContext<AuthStoreType | null>(null);
 
 // Provider component that creates the store
-export function AuthStoreProvider({ children }: { children: React.ReactNode }) {
-  const storeRef = useRef<ReturnType<typeof createAuthStore> | null>(null);
+export function AuthStoreProvider({
+  children,
+  preloadedState,
+}: {
+  children: React.ReactNode;
+  preloadedState?: PreloadedAuthState;
+}) {
+  const storeRef = useRef<AuthStoreType | null>(null);
   if (!storeRef.current) {
-    storeRef.current = createAuthStore();
+    storeRef.current = createAuthStore(preloadedState);
   }
 
   return (

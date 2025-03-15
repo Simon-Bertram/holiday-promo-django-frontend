@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/lib/auth/store";
+import { useAuthStore } from "@/features/auth/store/auth-store-provider";
 import {
   Card,
   CardContent,
@@ -30,9 +30,23 @@ import { toast } from "sonner";
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { user, isAuthenticated, deleteAccount } = useAuthStore();
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Use try-catch to handle potential store initialization errors
+  const storeData = useAuthStore((state) => ({
+    user: state.user,
+    isAuthenticated: state.isAuthenticated,
+    deleteAccount: state.deleteAccount,
+  }));
+
+  const { user, isAuthenticated, deleteAccount } = storeData || {
+    user: null,
+    isAuthenticated: false,
+    deleteAccount: async () => {
+      throw new Error("Store not initialized");
+    },
+  };
 
   useEffect(() => {
     // Check authentication status

@@ -2,13 +2,22 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/lib/auth/store";
-import { useDashboardStore } from "@/lib/dashboard/store";
-import DashboardLayout from "../../../features/user-crud/components/dashboard-layout";
+import { useAuthStore } from "@/features/auth/store/auth-store-provider";
+import { useDashboardStore } from "@/features/dashboard/store/dashboard-store-provider";
 
 export default function DashboardPage() {
-  const { user, isLoading } = useAuthStore();
-  const { fetchRegularUserCount } = useDashboardStore();
+  const { user, isLoading } = useAuthStore((state) => ({
+    user: state.user,
+    isLoading: state.isLoading,
+  }));
+
+  const { regularUserCount, fetchRegularUserCount } = useDashboardStore(
+    (state) => ({
+      regularUserCount: state.regularUserCount,
+      fetchRegularUserCount: state.fetchRegularUserCount,
+    })
+  );
+
   const router = useRouter();
 
   // Redirect users with role "USER" to the profile page
@@ -35,5 +44,16 @@ export default function DashboardPage() {
     return null; // Will redirect in useEffect
   }
 
-  return <DashboardLayout user={user} />;
+  // Return dashboard content
+  return (
+    <div className="dashboard-content">
+      <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
+
+      <div className="stats-card p-6 bg-white rounded-lg shadow-sm">
+        <h2 className="text-lg font-medium mb-4">User Statistics</h2>
+        <p className="text-3xl font-bold">{regularUserCount || 0}</p>
+        <p className="text-sm text-gray-500">Regular Users</p>
+      </div>
+    </div>
+  );
 }

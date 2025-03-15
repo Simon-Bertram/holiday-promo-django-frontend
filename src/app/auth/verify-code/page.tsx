@@ -50,21 +50,15 @@ export default function VerifyCodePage() {
 
       // Check if the user object exists
       if (user) {
-        // For regular users, complete authentication and redirect to profile
-        if (user.role === "USER") {
-          setUser(user);
-          setIsAuthenticated(true);
-          toast.success("Login successful");
+        setUser(user);
+        setIsAuthenticated(true);
+        toast.success("Login successful");
+
+        // Redirect based on user role
+        if (user.role === "ADMIN" || user.role === "MODERATOR") {
+          router.push("/dashboard");
+        } else {
           router.push("/profile");
-        }
-        // For admin/moderator users, redirect to password verification
-        else if (user.role === "ADMIN" || user.role === "MODERATOR") {
-          toast.success(
-            "Code verified successfully. Please enter your password to complete login"
-          );
-          router.push(
-            `/auth/admin-login?email=${encodeURIComponent(values.email)}`
-          );
         }
       } else {
         // Handle case where user data is missing

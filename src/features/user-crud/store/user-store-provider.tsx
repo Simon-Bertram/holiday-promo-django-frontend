@@ -2,8 +2,8 @@
 
 import { createContext, useContext, useRef, type ReactNode } from "react";
 import { useStore } from "zustand";
-import { createUsersStore } from "./user-store";
-import type { UsersState } from "./user-store";
+import { createUsersStore } from "./user-store.tsx";
+import type { UsersState } from "./user-store.tsx";
 
 // Create context for the store
 const UsersStoreContext = createContext<ReturnType<

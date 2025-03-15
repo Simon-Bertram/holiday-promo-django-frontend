@@ -5,7 +5,6 @@ import {
   RegisterData,
   MagicCodeRequest,
   MagicCodeVerify,
-  AdminLoginData,
   AuthResponse,
   UserExistsResponse,
 } from "../../../../features/auth/hooks/use-auth"; // Import types from the original auth.ts
@@ -118,15 +117,6 @@ const authService = {
   getCurrentUser: async (): Promise<User> => {
     const response = await apiClient.get<User>(endpoints.getCurrentUser);
     return response.data;
-  },
-
-  adminLogin: async (data: AdminLoginData): Promise<AuthResponse> => {
-    // Return AuthResponse
-    const response = await apiClient.post<AuthResponse>(
-      endpoints.adminLogin,
-      data
-    );
-    return response.data; // Return full response
   },
 
   logout: (): void => {

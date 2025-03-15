@@ -11,7 +11,7 @@ const apiClient = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 15000,
+  timeout: 15000, // 15 seconds timeout for requests
 });
 
 // Add request interceptor to add auth token to requests
@@ -34,6 +34,16 @@ apiClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // Handle timeout errors specifically
+    if (error.code === "ECONNABORTED") {
+      return Promise.reject(
+        new NetworkError(
+          "Request timed out. Please try again later.",
+          ErrorCode.REQUEST_TIMEOUT
+        )
+      );
+    }
+
     // Handle token refresh only if:
     // 1. Response status is 401 (Unauthorized)
     // 2. We haven't already tried to refresh the token for this request
@@ -54,19 +64,29 @@ apiClient.interceptors.response.use(
 
         // If token refresh is successful, save the new tokens
         if (response.data?.access) {
-          Cookies.set("access_token", response.data.access);
+          // Use consistent cookie options
+          const cookieOptions = {
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict" as const,
+            expires: 7,
+            path: "/",
+          };
+
+          Cookies.set("access_token", response.data.access, cookieOptions);
 
           // Only update refresh token if a new one was provided
           if (response.data.refresh) {
-            Cookies.set("refresh_token", response.data.refresh);
+            Cookies.set("refresh_token", response.data.refresh, cookieOptions);
           }
 
           // Update the authorization header and retry the original request
           originalRequest.headers.Authorization = `Bearer ${response.data.access}`;
           return apiClient(originalRequest);
         }
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      } catch (error) {
+      } catch (refreshError) {
+        // Log the refresh error for debugging
+        console.error("Token refresh failed:", refreshError);
+
         // If refresh fails, clear tokens and notify about session expiration
         handleSessionExpiration();
         return Promise.reject(
@@ -96,9 +116,9 @@ apiClient.interceptors.response.use(
 
 // Helper function to handle session expiration
 function handleSessionExpiration() {
-  // Clear tokens
-  Cookies.remove("access_token");
-  Cookies.remove("refresh_token");
+  // Clear tokens with consistent path
+  Cookies.remove("access_token", { path: "/" });
+  Cookies.remove("refresh_token", { path: "/" });
 
   // Dispatch event for components to react to
   document.dispatchEvent(
@@ -108,6 +128,11 @@ function handleSessionExpiration() {
       },
     })
   );
+
+  // Redirect to login page if in browser environment
+  if (typeof window !== "undefined") {
+    window.location.href = "/auth/login";
+  }
 }
 
 export default apiClient;

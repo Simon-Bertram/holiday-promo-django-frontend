@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getCurrentUser } from "@/features/auth/hooks/use-auth";
-import { useAuthStore } from "@/lib/auth/store";
+import { useAuthStore } from "@/features/auth/store/auth-store-provider";
 
 export default function DashboardLayout({
   children,
@@ -13,7 +13,13 @@ export default function DashboardLayout({
 }) {
   const router = useRouter();
   const { user, setUser, isAuthenticated, setIsAuthenticated, isLoading } =
-    useAuthStore();
+    useAuthStore((state) => ({
+      user: state.user,
+      setUser: state.setUser,
+      isAuthenticated: state.isAuthenticated,
+      setIsAuthenticated: state.setIsAuthenticated,
+      isLoading: state.isLoading,
+    }));
 
   useEffect(() => {
     const fetchUser = async () => {

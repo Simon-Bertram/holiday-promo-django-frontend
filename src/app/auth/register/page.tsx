@@ -26,23 +26,14 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { register } from "@/features/auth/hooks/use-auth";
+import { authService } from "@/features/auth/hooks/use-auth";
 
 // Form validation schema for registration
-const registerSchema = z
-  .object({
-    email: z.string().email({ message: "Please enter a valid email address" }),
-    password: z
-      .string()
-      .min(8, { message: "Password must be at least 8 characters" }),
-    password_confirm: z.string(),
-    first_name: z.string().optional(),
-    last_name: z.string().optional(),
-  })
-  .refine((data) => data.password === data.password_confirm, {
-    message: "Passwords don't match",
-    path: ["password_confirm"],
-  });
+const registerSchema = z.object({
+  email: z.string().email({ message: "Please enter a valid email address" }),
+  first_name: z.string().optional(),
+  last_name: z.string().optional(),
+});
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -53,8 +44,6 @@ export default function RegisterPage() {
     resolver: zodResolver(registerSchema),
     defaultValues: {
       email: "",
-      password: "",
-      password_confirm: "",
       first_name: "",
       last_name: "",
     },
@@ -64,7 +53,7 @@ export default function RegisterPage() {
   const onSubmit = async (values: z.infer<typeof registerSchema>) => {
     setIsLoading(true);
     try {
-      await register(values);
+      await authService.register(values);
       toast.success("Registration successful! Please log in.");
       router.push("/auth/login");
     } catch (error: unknown) {
@@ -82,15 +71,7 @@ export default function RegisterPage() {
         // Process field errors
         Object.entries(err.fieldErrors).forEach(([field, messages]) => {
           // Only process fields that are in our form
-          if (
-            [
-              "email",
-              "password",
-              "password_confirm",
-              "first_name",
-              "last_name",
-            ].includes(field)
-          ) {
+          if (["email", "first_name", "last_name"].includes(field)) {
             // Format field name for display
             const formattedField = field
               .split("_")
@@ -181,32 +162,6 @@ export default function RegisterPage() {
                 )}
               />
             </div>
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Password</FormLabel>
-                  <FormControl>
-                    <Input type="password" placeholder="••••••••" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="password_confirm"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Confirm Password</FormLabel>
-                  <FormControl>
-                    <Input type="password" placeholder="••••••••" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Registering..." : "Register"}
             </Button>

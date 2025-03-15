@@ -2,8 +2,8 @@
 
 import { createContext, useContext, useRef, type ReactNode } from "react";
 import { useStore } from "zustand";
-import { createDashboardStore } from "./dashboard-store";
-import type { DashboardState } from "./dashboard-store";
+import { createDashboardStore } from "./dashboard-store.tsx";
+import type { DashboardState } from "./dashboard-store.tsx";
 
 // Create context for the store
 const DashboardStoreContext = createContext<ReturnType<

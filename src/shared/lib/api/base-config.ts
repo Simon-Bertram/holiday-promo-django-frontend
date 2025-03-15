@@ -9,7 +9,6 @@ export const endpoints = {
   login: `${API_BASE_URL}/api/auth/login/`,
   requestMagicCode: `${API_BASE_URL}/api/auth/magic-code/request/`,
   verifyMagicCode: `${API_BASE_URL}/api/auth/magic-code/verify/`,
-  adminLogin: `${API_BASE_URL}/api/auth/admin-login/`,
   register: `${API_BASE_URL}/api/auth/register/`,
   logout: `${API_BASE_URL}/api/auth/logout/`,
   refresh: `${API_BASE_URL}/api/auth/refresh/`,

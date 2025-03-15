@@ -1,15 +1,9 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import Link from "next/link";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { toast } from "sonner";
-import ReCAPTCHA from "react-google-recaptcha";
 
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -18,46 +12,30 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { authService } from "@/features/auth/hooks/use-auth";
 import { useAsyncOperation, useFormError } from "@/shared/lib/error";
+import {
+  LoginForm,
+  EmailFormValues,
+} from "@/features/auth/components/login-form";
+import {
+  CaptchaVerification,
+  MagicCodeSent,
+} from "@/features/auth/components/magic-code-form";
 
-// Stage 1: Email validation schema
-const emailSchema = z.object({
-  email: z.string().email({ message: "Please enter a valid email address" }),
-});
+// Authentication flow stages
+enum Stage {
+  EMAIL_ENTRY, // Step 1: Enter email
+  CAPTCHA_VERIFICATION, // Step 2: Complete CAPTCHA
+  MAGIC_CODE_SENT, // Step 3: Magic code sent, await verification
+}
 
 export default function LoginPage() {
-  const router = useRouter();
-  const recaptchaRef = useRef<ReCAPTCHA>(null);
   const { handleError } = useFormError();
   const { requestMagicCode } = authService;
 
-  // Authentication flow stages
-  enum Stage {
-    EMAIL_ENTRY, // Step 1: Enter email
-    CAPTCHA_VERIFICATION, // Step 2: Complete CAPTCHA
-    MAGIC_CODE_SENT, // Step 3: Magic code sent, await verification
-  }
-
   const [stage, setStage] = useState<Stage>(Stage.EMAIL_ENTRY);
   const [userEmail, setUserEmail] = useState<string>("");
-
-  // Email form
-  const emailForm = useForm<z.infer<typeof emailSchema>>({
-    resolver: zodResolver(emailSchema),
-    defaultValues: {
-      email: "",
-    },
-  });
 
   // Check if user exists and send magic code
   const { execute: executeRequestMagicCode, isLoading: isMagicCodeLoading } =
@@ -71,7 +49,7 @@ export default function LoginPage() {
     });
 
   // Handle email submission
-  const onEmailSubmit = async (values: z.infer<typeof emailSchema>) => {
+  const onEmailSubmit = async (values: EmailFormValues) => {
     setUserEmail(values.email);
     setStage(Stage.CAPTCHA_VERIFICATION);
   };
@@ -99,9 +77,6 @@ export default function LoginPage() {
         ) {
           handleError(error);
         }
-
-        // Reset captcha on error
-        recaptchaRef.current?.reset();
       }
     }
   };
@@ -122,70 +97,17 @@ export default function LoginPage() {
       </CardHeader>
       <CardContent>
         {stage === Stage.EMAIL_ENTRY && (
-          <Form {...emailForm}>
-            <form
-              onSubmit={emailForm.handleSubmit(onEmailSubmit)}
-              className="space-y-4"
-            >
-              <FormField
-                control={emailForm.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input placeholder="email@example.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Processing..." : "Continue"}
-              </Button>
-            </form>
-          </Form>
+          <LoginForm onSubmit={onEmailSubmit} isLoading={isLoading} />
         )}
 
         {stage === Stage.CAPTCHA_VERIFICATION && (
-          <div className="flex flex-col items-center space-y-4">
-            <p className="text-sm text-center mb-4">
-              Please complete the CAPTCHA verification to continue
-            </p>
-            <ReCAPTCHA
-              ref={recaptchaRef}
-              sitekey={
-                process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ||
-                // This is Google's test key that always passes verification
-                // IMPORTANT: Replace with a real key before deployment to production
-                "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"
-              }
-              onChange={onCaptchaChange}
-            />
-            {isLoading && (
-              <p className="text-sm text-center mt-2">Processing...</p>
-            )}
-          </div>
+          <CaptchaVerification
+            onCaptchaChange={onCaptchaChange}
+            isLoading={isLoading}
+          />
         )}
 
-        {stage === Stage.MAGIC_CODE_SENT && (
-          <div className="text-center space-y-4">
-            <p>
-              We&apos;ve sent a 5-digit verification code to your email. Please
-              check your inbox and enter the code on the verification page.
-            </p>
-            <Button
-              onClick={() =>
-                router.push(
-                  `/auth/verify-code?email=${encodeURIComponent(userEmail)}`
-                )
-              }
-              className="w-full"
-            >
-              Enter Verification Code
-            </Button>
-          </div>
-        )}
+        {stage === Stage.MAGIC_CODE_SENT && <MagicCodeSent email={userEmail} />}
       </CardContent>
       <CardFooter className="flex flex-col space-y-2">
         <div className="text-sm text-center">
