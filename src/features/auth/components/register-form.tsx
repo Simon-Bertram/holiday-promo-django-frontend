@@ -25,11 +25,11 @@ const registerSchema = z.object({
 export type RegisterFormValues = z.infer<typeof registerSchema>;
 
 interface RegisterFormProps {
-  onSubmit: (values: RegisterFormValues) => void;
+  onSubmitAction: (values: RegisterFormValues) => void;
   isLoading: boolean;
 }
 
-export function RegisterForm({ onSubmit, isLoading }: RegisterFormProps) {
+export function RegisterForm({ onSubmitAction, isLoading }: RegisterFormProps) {
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -41,7 +41,7 @@ export function RegisterForm({ onSubmit, isLoading }: RegisterFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(onSubmitAction)} className="space-y-4">
         <FormField
           control={form.control}
           name="email"

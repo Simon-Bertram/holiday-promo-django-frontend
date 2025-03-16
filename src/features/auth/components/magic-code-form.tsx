@@ -6,12 +6,12 @@ import ReCAPTCHA from "react-google-recaptcha";
 import { Button } from "@/components/ui/button";
 
 interface CaptchaVerificationProps {
-  onCaptchaChange: (token: string | null) => void;
+  onCaptchaChangeAction: (token: string | null) => void;
   isLoading: boolean;
 }
 
 export function CaptchaVerification({
-  onCaptchaChange,
+  onCaptchaChangeAction,
   isLoading,
 }: CaptchaVerificationProps) {
   const recaptchaRef = useRef<ReCAPTCHA>(null);
@@ -29,7 +29,7 @@ export function CaptchaVerification({
           // IMPORTANT: Replace with a real key before deployment to production
           "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"
         }
-        onChange={onCaptchaChange}
+        onChange={onCaptchaChangeAction}
       />
       {isLoading && <p className="text-sm text-center mt-2">Processing...</p>}
     </div>

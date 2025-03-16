@@ -23,11 +23,11 @@ const emailSchema = z.object({
 export type EmailFormValues = z.infer<typeof emailSchema>;
 
 interface LoginFormProps {
-  onSubmit: (values: EmailFormValues) => void;
+  onSubmitAction: (values: EmailFormValues) => void;
   isLoading: boolean;
 }
 
-export function LoginForm({ onSubmit, isLoading }: LoginFormProps) {
+export function LoginForm({ onSubmitAction, isLoading }: LoginFormProps) {
   // Email form
   const form = useForm<EmailFormValues>({
     resolver: zodResolver(emailSchema),
@@ -38,7 +38,7 @@ export function LoginForm({ onSubmit, isLoading }: LoginFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(onSubmitAction)} className="space-y-4">
         <FormField
           control={form.control}
           name="email"
