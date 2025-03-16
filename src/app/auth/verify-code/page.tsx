@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -8,6 +8,7 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { useAuthStore } from "@/features/auth/store/auth-store-provider";
 import { VerifyCodeForm } from "./verify-code-form";
+import { AuthErrorBoundary } from "@/features/auth/components/auth-error-boundary";
 
 // Form validation schema for magic code verification
 const verifyCodeSchema = z.object({
@@ -20,13 +21,17 @@ export default function VerifyCodePage() {
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
 
-  // Get auth store functions in a single selector to prevent multiple subscriptions
-  const { loginWithMagicCode } = useAuthStore((state) => ({
-    loginWithMagicCode: state.loginWithMagicCode,
-  }));
+  // Get email from URL params if available - memoize to prevent unnecessary re-renders
+  const emailFromParams = useMemo(
+    () => searchParams.get("email"),
+    [searchParams]
+  );
 
-  // Get email from URL params if available
-  const emailFromParams = searchParams.get("email");
+  // Get auth store functions in a single selector to prevent multiple subscriptions
+  // Using a stable selector function to prevent infinite loops
+  const loginWithMagicCode = useAuthStore(
+    useCallback((state) => state.loginWithMagicCode, [])
+  );
 
   // Magic code verification form
   const form = useForm<z.infer<typeof verifyCodeSchema>>({
@@ -44,44 +49,49 @@ export default function VerifyCodePage() {
     }
   }, [emailFromParams, form]);
 
-  // Handle magic code verification
-  const onSubmit = async (values: z.infer<typeof verifyCodeSchema>) => {
-    setIsLoading(true);
-    try {
-      // loginWithMagicCode already updates the store state internally
-      const user = await loginWithMagicCode(values);
+  // Memoize the submit handler to prevent unnecessary re-renders
+  const onSubmit = useCallback(
+    async (values: z.infer<typeof verifyCodeSchema>) => {
+      setIsLoading(true);
+      try {
+        // loginWithMagicCode already updates the store state internally
+        const user = await loginWithMagicCode(values);
 
-      // Check if the user object exists
-      if (user) {
-        toast.success("Login successful");
+        // Check if the user object exists
+        if (user) {
+          toast.success("Login successful");
 
-        // Redirect based on user role
-        if (user.role === "ADMIN" || user.role === "MODERATOR") {
-          router.push("/dashboard");
+          // Redirect based on user role
+          if (user.role === "ADMIN" || user.role === "MODERATOR") {
+            router.push("/dashboard");
+          } else {
+            router.push("/profile");
+          }
         } else {
-          router.push("/profile");
+          // Handle case where user data is missing
+          console.error("Invalid response format: missing user data");
+          toast.error("Unexpected response format. Please try again.");
         }
-      } else {
-        // Handle case where user data is missing
-        console.error("Invalid response format: missing user data");
-        toast.error("Unexpected response format. Please try again.");
+      } catch (error: unknown) {
+        if (error instanceof Error && error.message.includes("timeout")) {
+          toast.error(
+            "Request timed out. The server took too long to respond. Please try again."
+          );
+        } else {
+          const errorMessage =
+            error instanceof Error ? error.message : "Failed to verify code";
+          toast.error(errorMessage);
+        }
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error: unknown) {
-      if (error instanceof Error && error.message.includes("timeout")) {
-        toast.error(
-          "Request timed out. The server took too long to respond. Please try again."
-        );
-      } else {
-        const errorMessage =
-          error instanceof Error ? error.message : "Failed to verify code";
-        toast.error(errorMessage);
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    },
+    [loginWithMagicCode, router]
+  );
 
   return (
-    <VerifyCodeForm form={form} onSubmit={onSubmit} isLoading={isLoading} />
+    <AuthErrorBoundary>
+      <VerifyCodeForm form={form} onSubmit={onSubmit} isLoading={isLoading} />
+    </AuthErrorBoundary>
   );
 }

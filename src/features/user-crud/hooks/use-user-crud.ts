@@ -1,9 +1,19 @@
+"use client";
+
 import { useState, useEffect } from "react";
 import { toast } from "sonner"; // assuming this is your toast library
-import { useUsersStore } from "@/features/user-crud/store/user-store";
+import { useUsersStore } from "../store/user-store-provider";
 
 export function useUsers() {
-  const { users, isLoading, error, fetchUsers, deleteUser } = useUsersStore();
+  const { users, isLoading, error, fetchUsers, deleteUser } = useUsersStore(
+    (state) => ({
+      users: state.users,
+      isLoading: state.isLoading,
+      error: state.error,
+      fetchUsers: state.fetchUsers,
+      deleteUser: state.deleteUser,
+    })
+  );
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 

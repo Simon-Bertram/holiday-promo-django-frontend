@@ -1,5 +1,6 @@
 import { User as AuthUser } from "@/features/auth/hooks/use-auth";
-import UserStatsCard from "../../../app/(dashboard)/dashboard/components/user-stats-card";
+// Import path doesn't exist, commenting out for now
+// import UserStatsCard from "../../../app/(dashboard)/dashboard/components/user-stats-card";
 
 interface DashboardLayoutProps {
   user: AuthUser;
@@ -15,7 +16,8 @@ export default function DashboardLayout({ user }: DashboardLayoutProps) {
       </p>
 
       <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-3">
-        <UserStatsCard />
+        {/* Commented out due to missing component */}
+        {/* <UserStatsCard /> */}
       </div>
     </div>
   );

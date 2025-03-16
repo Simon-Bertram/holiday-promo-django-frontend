@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { User } from "@/features/user-crud/types/user-type";
-import { useUsersStore } from "@/lib/users/store";
+import { useUsersStore } from "@/features/user-crud/store/user-store-provider";
 import { useEffect } from "react";
 import {
   Table,
@@ -37,7 +37,15 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export default function UserTable() {
-  const { users, isLoading, error, fetchUsers, deleteUser } = useUsersStore();
+  const { users, isLoading, error, fetchUsers, deleteUser } = useUsersStore(
+    (state) => ({
+      users: state.users,
+      isLoading: state.isLoading,
+      error: state.error,
+      fetchUsers: state.fetchUsers,
+      deleteUser: state.deleteUser,
+    })
+  );
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
 

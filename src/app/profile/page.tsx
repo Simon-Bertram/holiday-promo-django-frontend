@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/features/auth/store/auth-store-provider";
 import {
@@ -14,7 +14,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { redirect } from "next/navigation";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,25 +32,21 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Use try-catch to handle potential store initialization errors
-  const storeData = useAuthStore((state) => ({
-    user: state.user,
-    isAuthenticated: state.isAuthenticated,
-    deleteAccount: state.deleteAccount,
-  }));
-
-  const { user, isAuthenticated, deleteAccount } = storeData || {
-    user: null,
-    isAuthenticated: false,
-    deleteAccount: async () => {
-      throw new Error("Store not initialized");
-    },
-  };
+  // Use stable selectors with useCallback to prevent infinite loops
+  const user = useAuthStore(useCallback((state) => state.user, []));
+  const isAuthenticated = useAuthStore(
+    useCallback((state) => state.isAuthenticated, [])
+  );
+  const deleteAccount = useAuthStore(
+    useCallback((state) => state.deleteAccount, [])
+  );
 
   useEffect(() => {
     // Check authentication status
     if (!isAuthenticated) {
-      redirect("/auth/login");
+      // Use router.push instead of redirect
+      router.push("/auth/login");
+      return;
     }
 
     // Simulate loading for better UX
@@ -60,7 +55,7 @@ export default function ProfilePage() {
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [isAuthenticated]);
+  }, [isAuthenticated, router]);
 
   // Get user initials for avatar
   const getInitials = () => {

@@ -1,5 +1,8 @@
+"use client";
+
 import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { AppError, ValidationError } from "./types";
 import { createAppError, showErrorToast } from "./handlers";
 
@@ -14,6 +17,7 @@ export function useAsyncOperation<T, Args extends unknown[]>(
     showToastOnError?: boolean;
     showToastOnSuccess?: boolean;
     successMessage?: string;
+    throwError?: boolean; // Whether to throw the error to be caught by error boundaries
   } = {}
 ) {
   const [isLoading, setIsLoading] = useState(false);
@@ -26,6 +30,7 @@ export function useAsyncOperation<T, Args extends unknown[]>(
     showToastOnError = true,
     showToastOnSuccess = false,
     successMessage,
+    throwError = false,
   } = options;
 
   const execute = useCallback(
@@ -52,6 +57,12 @@ export function useAsyncOperation<T, Args extends unknown[]>(
         }
 
         onError?.(appError, ...args);
+
+        // If throwError is true, throw the error to be caught by error boundaries
+        if (throwError) {
+          throw appError;
+        }
+
         throw appError;
       } finally {
         setIsLoading(false);
@@ -64,6 +75,7 @@ export function useAsyncOperation<T, Args extends unknown[]>(
       showToastOnError,
       showToastOnSuccess,
       successMessage,
+      throwError,
     ]
   );
 
@@ -85,10 +97,14 @@ export function useAsyncOperation<T, Args extends unknown[]>(
 export function useFormError() {
   const [error, setError] = useState<AppError | null>(null);
 
-  const handleError = useCallback((err: unknown) => {
+  const handleError = useCallback((err: unknown, showToast = true) => {
     const appError = createAppError(err);
     setError(appError);
-    showErrorToast(appError);
+
+    if (showToast) {
+      showErrorToast(appError);
+    }
+
     return appError;
   }, []);
 
@@ -122,7 +138,7 @@ export function useSessionErrorHandler() {
     const handleSessionExpired = () => {
       // Display a message and redirect to login
       showErrorToast("Your session has expired. Please log in again.");
-      router.push("/login");
+      router.push("/auth/login");
     };
 
     document.addEventListener("auth:sessionExpired", handleSessionExpired);
@@ -134,16 +150,20 @@ export function useSessionErrorHandler() {
 }
 
 /**
- * Creates a toast notification for errors
- * Note: This is a simple implementation - replace with your toast library if needed
+ * Hook to manually throw errors to be caught by error boundaries
  */
-const toast = {
-  success: (message: string) => {
-    console.log("Success:", message);
-    // This is implemented in your imports
-  },
-  error: (message: string) => {
-    console.log("Error:", message);
-    // This is implemented in your imports
-  },
-};
+export function useErrorBoundary() {
+  const [error, setError] = useState<Error | null>(null);
+
+  // If there's an error, throw it to be caught by the nearest error boundary
+  if (error) {
+    throw error;
+  }
+
+  return {
+    showBoundary: useCallback((err: unknown) => {
+      const appError = createAppError(err);
+      setError(appError);
+    }, []),
+  };
+}

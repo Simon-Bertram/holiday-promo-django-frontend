@@ -5,10 +5,7 @@ import {
   ApiError,
   AuthError,
   ValidationError,
-  NetworkError,
-  NotFoundError,
-  PermissionError,
-  SessionError,
+  // NetworkError, NotFoundError, PermissionError, and SessionError are used in HTTP_ERROR_MAP
   ErrorCode,
   HTTP_ERROR_MAP,
 } from "./types";

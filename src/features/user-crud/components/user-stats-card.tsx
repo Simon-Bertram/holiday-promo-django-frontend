@@ -1,11 +1,15 @@
 "use client";
 
-import { useDashboardStore } from "@/lib/dashboard/store";
+import { useDashboardStore } from "@/features/dashboard/store/dashboard-store-provider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function UserStatsCard() {
   const { regularUserCount, isLoadingUserCount, userCountError } =
-    useDashboardStore();
+    useDashboardStore((state) => ({
+      regularUserCount: state.regularUserCount,
+      isLoadingUserCount: state.isLoadingUserCount,
+      userCountError: state.userCountError,
+    }));
 
   if (isLoadingUserCount) {
     return <div>Loading...</div>;
