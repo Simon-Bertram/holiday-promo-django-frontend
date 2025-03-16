@@ -19,7 +19,7 @@ export interface AuthState {
   setUser: (user: User | null) => void;
   setIsAuthenticated: (value: boolean) => void;
   loginWithMagicCode: (data: { email: string; code: string }) => Promise<User>;
-  logout: () => void;
+  logout: () => Promise<void>;
   deleteAccount: () => Promise<void>;
   clearError: () => void;
 }
@@ -98,12 +98,20 @@ export const createAuthStore = (preloadedState: PreloadedAuthState = {}) => {
           }
         },
 
-        logout: () => {
-          // Remove cookies when logging out
-          Cookies.remove("access_token", { path: "/" });
-          Cookies.remove("refresh_token", { path: "/" });
-          authService.logout();
-          set({ user: null, isAuthenticated: false });
+        logout: async () => {
+          try {
+            await authService.logout();
+            // Remove cookies after successful server logout
+            Cookies.remove("access_token", { path: "/" });
+            Cookies.remove("refresh_token", { path: "/" });
+            set({ user: null, isAuthenticated: false });
+          } catch (error) {
+            console.error("Logout error:", error);
+            // Still clear state and cookies on error
+            Cookies.remove("access_token", { path: "/" });
+            Cookies.remove("refresh_token", { path: "/" });
+            set({ user: null, isAuthenticated: false });
+          }
         },
 
         deleteAccount: async () => {

@@ -11,7 +11,6 @@ import {
 import { endpoints } from "../base-config";
 import axios from "axios";
 import { NetworkError, ErrorCode } from "../../error/types";
-import Cookies from "js-cookie";
 
 const authService = {
   checkUserExists: async (data: {
@@ -119,18 +118,9 @@ const authService = {
     return response.data;
   },
 
-  logout: (): void => {
-    // Clear auth cookies
-    Cookies.remove("access_token");
-    Cookies.remove("refresh_token");
-
-    // Optionally call the backend logout endpoint if needed
-    try {
-      apiClient.post(endpoints.logout);
-    } catch (error) {
-      console.error("Error during logout:", error);
-      // Continue with client-side logout even if server logout fails
-    }
+  logout: async (): Promise<void> => {
+    // Call the backend logout endpoint
+    await apiClient.post(endpoints.logout);
   },
 
   deleteAccount: async (): Promise<{ message: string }> => {

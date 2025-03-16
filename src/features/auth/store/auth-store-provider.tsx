@@ -117,7 +117,7 @@ export function useAuthStore<T>(selector: (state: AuthState) => T): T {
               last_name: "",
               role: "USER",
             }),
-            logout: () => {},
+            logout: async () => {},
             deleteAccount: async () => {},
             clearError: () => {},
           };

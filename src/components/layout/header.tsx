@@ -10,7 +10,12 @@ export function Header() {
   const logout = useAuthStore((state) => state.logout);
 
   const handleLogout = async () => {
-    await logout();
+    try {
+      await logout();
+    } catch (error) {
+      console.error("Logout failed:", error);
+      // Optionally show an error message to the user
+    }
   };
 
   return (

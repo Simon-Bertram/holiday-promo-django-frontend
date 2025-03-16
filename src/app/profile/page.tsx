@@ -40,6 +40,7 @@ export default function ProfilePage() {
   const deleteAccount = useAuthStore(
     useCallback((state) => state.deleteAccount, [])
   );
+  const logout = useAuthStore(useCallback((state) => state.logout, []));
 
   useEffect(() => {
     // Check authentication status
@@ -72,6 +73,7 @@ export default function ProfilePage() {
     setIsDeleting(true);
     try {
       await deleteAccount();
+      await logout(); // Logout after successful account deletion
       toast.success("Your account has been deleted successfully");
       router.push("/auth/login");
     } catch (error) {
