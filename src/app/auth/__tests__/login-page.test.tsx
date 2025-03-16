@@ -98,9 +98,11 @@ describe("LoginPage", () => {
 
     // Wait for the form submission to complete
     await waitFor(() => {
-      expect(mockHandleEmailSubmit).toHaveBeenCalledWith({
-        email: "test@example.com",
-      });
+      // The mock function is called with the form event, not just the email object
+      expect(mockHandleEmailSubmit).toHaveBeenCalled();
+      // Check that the first argument passed to the mock contains the email
+      const firstCallArg = mockHandleEmailSubmit.mock.calls[0][0];
+      expect(firstCallArg).toHaveProperty("email", "test@example.com");
     });
   });
 

@@ -78,12 +78,21 @@ export const createAuthStore = (preloadedState: PreloadedAuthState = {}) => {
             }
 
             const user = response.user;
-            set({ user, isAuthenticated: true, isLoading: false });
+            // Update state in a single batch to prevent multiple re-renders
+            set({
+              user,
+              isAuthenticated: true,
+              isLoading: false,
+              error: null,
+            });
             return user;
           } catch (error) {
+            // Update state in a single batch
             set({
               error: error instanceof Error ? error.message : "Failed to login",
               isLoading: false,
+              user: null,
+              isAuthenticated: false,
             });
             throw error;
           }
@@ -128,24 +137,13 @@ export const createAuthStore = (preloadedState: PreloadedAuthState = {}) => {
           };
         }),
         // Don't persist loading state or errors, cache snapshot result to avoid infinite loop
-        partialize: (() => {
-          let cachedSnapshot: { user: User | null; isAuthenticated: boolean } =
-            { user: null, isAuthenticated: false };
-          let cachedKey = JSON.stringify(cachedSnapshot);
-          return (state: AuthState) => {
-            const currentSnapshot = {
-              user: state.user,
-              isAuthenticated: state.isAuthenticated,
-            };
-            const currentKey = JSON.stringify(currentSnapshot);
-            if (currentKey === cachedKey) {
-              return cachedSnapshot;
-            }
-            cachedSnapshot = currentSnapshot;
-            cachedKey = currentKey;
-            return cachedSnapshot;
+        partialize: (state: AuthState) => {
+          // Only persist user and authentication state, not loading or errors
+          return {
+            user: state.user,
+            isAuthenticated: state.isAuthenticated,
           };
-        })(),
+        },
       }
     )
   );

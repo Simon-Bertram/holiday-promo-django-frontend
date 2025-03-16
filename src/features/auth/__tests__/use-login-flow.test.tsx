@@ -19,7 +19,7 @@ jest.mock("../hooks/use-auth", () => ({
 
 jest.mock("@/shared/lib/error", () => ({
   useAsyncOperation: jest.fn((operation, options) => ({
-    execute: async (...args) => {
+    execute: async (...args: unknown[]) => {
       try {
         const result = await operation(...args);
         options?.onSuccess?.(result, ...args);

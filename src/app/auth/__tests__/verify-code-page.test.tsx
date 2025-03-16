@@ -171,13 +171,27 @@ describe("VerifyCodePage", () => {
     });
 
     // Submit the form
-    fireEvent.click(screen.getByRole("button", { name: /verify code/i }));
+    const submitButton = screen.getByRole("button", { name: /verify code/i });
+    fireEvent.click(submitButton);
 
-    // Check for loading state
-    expect(
-      screen.getByRole("button", { name: /verifying/i })
-    ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /verifying/i })).toBeDisabled();
+    // Use waitFor to wait for the button text to change
+    await waitFor(
+      () => {
+        // The button text changes to "Verifying..." when isLoading is true
+        // But we need to re-query the button as React may have re-rendered it
+        const buttons = screen.getAllByRole("button");
+        const loadingButton = buttons.find((button) =>
+          button.textContent?.toLowerCase().includes("verifying")
+        );
+
+        // If we can't find the button with "verifying" text, this will fail the test
+        expect(loadingButton).toBeDefined();
+        if (loadingButton) {
+          expect(loadingButton).toBeDisabled();
+        }
+      },
+      { timeout: 1000 }
+    );
 
     // Wait for the verification to complete
     await waitFor(() => {

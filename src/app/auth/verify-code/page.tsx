@@ -19,9 +19,11 @@ export default function VerifyCodePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
-  const setUser = useAuthStore((state) => state.setUser);
-  const setIsAuthenticated = useAuthStore((state) => state.setIsAuthenticated);
-  const loginWithMagicCode = useAuthStore((state) => state.loginWithMagicCode);
+
+  // Get auth store functions in a single selector to prevent multiple subscriptions
+  const { loginWithMagicCode } = useAuthStore((state) => ({
+    loginWithMagicCode: state.loginWithMagicCode,
+  }));
 
   // Get email from URL params if available
   const emailFromParams = searchParams.get("email");
@@ -46,12 +48,11 @@ export default function VerifyCodePage() {
   const onSubmit = async (values: z.infer<typeof verifyCodeSchema>) => {
     setIsLoading(true);
     try {
+      // loginWithMagicCode already updates the store state internally
       const user = await loginWithMagicCode(values);
 
       // Check if the user object exists
       if (user) {
-        setUser(user);
-        setIsAuthenticated(true);
         toast.success("Login successful");
 
         // Redirect based on user role
