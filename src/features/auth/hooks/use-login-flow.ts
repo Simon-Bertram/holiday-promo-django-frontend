@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { useAsyncOperation, useFormError } from "@/shared/lib/error";
 import { authService } from "./use-auth";
 import { EmailFormValues } from "../components/login-form";
+import { AppError } from "@/shared/lib/error/types";
 
 // Authentication flow stages
 export enum LoginStage {
@@ -27,6 +28,15 @@ export function useLoginFlow() {
           "If your email exists in our system, a magic code has been sent to it"
         );
       },
+      onError: (error) => {
+        // Handle timeout errors specifically
+        if (error instanceof AppError && error.message.includes("Timeout")) {
+          toast.error("Request timed out. Please try again.");
+          setStage(LoginStage.EMAIL_ENTRY);
+          return;
+        }
+        handleError(error);
+      },
     });
 
   // Handle email submission
@@ -37,27 +47,36 @@ export function useLoginFlow() {
 
   // Handle CAPTCHA verification
   const handleCaptchaChange = async (token: string | null) => {
-    if (token) {
-      try {
-        // After CAPTCHA verification, check if user exists and send magic code
-        await executeRequestMagicCode({
-          email: userEmail,
-          captcha_token: token,
-        });
-      } catch (error) {
-        // For security, don't reveal if email doesn't exist
+    if (!token) {
+      toast.error("Please complete the CAPTCHA verification");
+      return;
+    }
+
+    try {
+      // After CAPTCHA verification, check if user exists and send magic code
+      await executeRequestMagicCode({
+        email: userEmail,
+        captcha_token: token,
+      });
+    } catch (error) {
+      // For security, don't reveal if email doesn't exist
+      if (error instanceof AppError && error.message.includes("Timeout")) {
+        toast.error("Request timed out. Please try again.");
+        setStage(LoginStage.EMAIL_ENTRY);
+      } else {
         setStage(LoginStage.MAGIC_CODE_SENT);
         toast.success(
           "If your email exists in our system, a magic code has been sent to it"
         );
+      }
 
-        // Only log actual errors
-        if (
-          error instanceof Error &&
-          !error.message.includes("No user with this email address")
-        ) {
-          handleError(error);
-        }
+      // Only log actual errors
+      if (
+        error instanceof Error &&
+        !error.message.includes("No user with this email address") &&
+        !error.message.includes("Timeout")
+      ) {
+        handleError(error);
       }
     }
   };

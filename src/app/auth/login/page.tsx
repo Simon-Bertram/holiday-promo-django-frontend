@@ -15,6 +15,7 @@ import {
   MagicCodeSent,
 } from "@/features/auth/components/magic-code-form";
 import { useLoginFlow, LoginStage } from "@/features/auth/hooks/use-login-flow";
+import { ErrorBoundary } from "@/shared/lib/error/components/error-boundary";
 
 export default function LoginPage() {
   const {
@@ -25,7 +26,7 @@ export default function LoginPage() {
     handleCaptchaChange,
   } = useLoginFlow();
 
-  return (
+  const renderContent = () => (
     <Card className="w-full">
       <CardHeader>
         <CardTitle className="text-2xl">Login</CardTitle>
@@ -62,4 +63,6 @@ export default function LoginPage() {
       </CardFooter>
     </Card>
   );
+
+  return <ErrorBoundary>{renderContent()}</ErrorBoundary>;
 }

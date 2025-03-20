@@ -58,7 +58,7 @@ apiClient.interceptors.response.use(
       try {
         // Try to refresh the token
         const refreshToken = Cookies.get("refresh_token");
-        const response = await axios.post(`${API_URL}/auth/refresh/`, {
+        const response = await axios.post(`${API_URL}/api/auth/refresh/`, {
           refresh: refreshToken,
         });
 

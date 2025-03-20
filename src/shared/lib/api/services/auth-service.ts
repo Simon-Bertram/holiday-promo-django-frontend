@@ -86,23 +86,41 @@ const authService = {
   requestMagicCode: async (
     data: MagicCodeRequest
   ): Promise<{ message: string; email: string }> => {
-    const response = await apiClient.post<{ message: string; email: string }>(
-      endpoints.requestMagicCode,
-      data
-    );
-    return response.data;
+    try {
+      const response = await apiClient.post<{ message: string; email: string }>(
+        endpoints.requestMagicCode,
+        data,
+        {
+          timeout: 30000, // 30 seconds timeout for magic code requests
+        }
+      );
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        if (error.code === "ECONNABORTED") {
+          throw new NetworkError(
+            "Request timed out. Please try again.",
+            ErrorCode.REQUEST_TIMEOUT
+          );
+        }
+        // Handle other axios errors
+        throw new NetworkError(error.message, ErrorCode.SERVER_UNREACHABLE);
+      }
+      throw error;
+    }
   },
 
   verifyMagicCode: async (data: MagicCodeVerify): Promise<AuthResponse> => {
-    // Return AuthResponse
     try {
       const response = await apiClient.post<AuthResponse>(
         endpoints.verifyMagicCode,
-        data
+        data,
+        {
+          timeout: 30000, // 30 seconds timeout for verification
+        }
       );
-      return response.data; // Return full response
+      return response.data;
     } catch (error) {
-      // Check if it's a timeout error
       if (axios.isAxiosError(error) && error.code === "ECONNABORTED") {
         throw new NetworkError(
           "Request timed out. Please try again.",

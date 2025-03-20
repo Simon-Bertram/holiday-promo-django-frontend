@@ -75,7 +75,7 @@ export default function ProfilePage() {
       await deleteAccount();
       await logout(); // Logout after successful account deletion
       toast.success("Your account has been deleted successfully");
-      router.push("/auth/login");
+      router.push("/");
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to delete account";

@@ -21,7 +21,7 @@ export interface RegisterData {
 
 export interface MagicCodeRequest {
   email: string;
-  captcha_token?: string;
+  captcha_token: string;
 }
 
 export interface MagicCodeVerify {
